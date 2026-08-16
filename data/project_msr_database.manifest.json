@@ -1,0 +1,86 @@
+{
+  "format": "project-msr-sharded-json",
+  "format_version": 1,
+  "application_version": "4.2.2",
+  "database_version": "4.2.0",
+  "database_name": "Project-MSR Integrated Engineering, Demonstration, Licensing, Resource and Financial Database",
+  "storage": "plain UTF-8 JSON shards; no gzip, binary encoding, or data reduction",
+  "top_level_order": [
+    "meta",
+    "project",
+    "pathways",
+    "pathway_modules",
+    "tasks",
+    "resources",
+    "financials",
+    "milestones",
+    "risks",
+    "design_review_gates",
+    "leadership_governance",
+    "raci",
+    "test_matrices",
+    "acceleration",
+    "regulatory_crosswalk",
+    "licensing_path_table",
+    "sources",
+    "regulatory_reference_catalog",
+    "data_quality",
+    "route_cost_model",
+    "planning_profile"
+  ],
+  "canonical_semantic_sha256": "554ff077c2b6bb7ad3948a1ab0f65fca018190e9ea6b5f0d95379170e0bf4f51",
+  "record_counts": {
+    "shared_tasks": 841,
+    "route_tasks": 96,
+    "resource_roles": 30,
+    "resource_assignments": 3138
+  },
+  "parts": [
+    {
+      "path": "project_msr_database.core.json",
+      "kind": "core",
+      "size_bytes": 23120518,
+      "sha256": "5e9adef8b2e1b824eec604338afde030ee642d5922ee116f0d3aa26dcda4b1e3"
+    },
+    {
+      "path": "project_msr_database.tasks.001.json",
+      "kind": "task_shard",
+      "shard_index": 1,
+      "task_start_index": 0,
+      "task_end_index": 272,
+      "task_count": 273,
+      "size_bytes": 46385345,
+      "sha256": "5776f3a31f3a8970fbcd2bfdd62b00edadc6fdf979cba17190f3fb1f51a2cc13"
+    },
+    {
+      "path": "project_msr_database.tasks.002.json",
+      "kind": "task_shard",
+      "shard_index": 2,
+      "task_start_index": 273,
+      "task_end_index": 480,
+      "task_count": 208,
+      "size_bytes": 46514281,
+      "sha256": "479f960bde72421b8eef7ebd1ba20ee53019f0f5cd84072306d4dae1447ce2ce"
+    },
+    {
+      "path": "project_msr_database.tasks.003.json",
+      "kind": "task_shard",
+      "shard_index": 3,
+      "task_start_index": 481,
+      "task_end_index": 704,
+      "task_count": 224,
+      "size_bytes": 46475705,
+      "sha256": "25fadf09ae860998d65b68ff2570dcbac5d2ffa3b341dd504e0695a09ca79157"
+    },
+    {
+      "path": "project_msr_database.tasks.004.json",
+      "kind": "task_shard",
+      "shard_index": 4,
+      "task_start_index": 705,
+      "task_end_index": 840,
+      "task_count": 136,
+      "size_bytes": 30892363,
+      "sha256": "c36bc41d8b8cf3867d07d0b04819c6634bc6ff2db1b694c448cf5825c4a66249"
+    }
+  ]
+}
