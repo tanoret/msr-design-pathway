@@ -1,13 +1,11 @@
 # Changelog
 
-## 4.3.0 - 2026-08-18
+## 4.3.1 - 2026-08-18
 
-- Added execution-ready implementation plans to all 937 WBS activities.
-- Added 11 fuel, chemistry, fission-product, materials, safeguards, waste, test, supply-chain, host, facility, and startup playbooks.
-- Added 25 detailed chemistry and processing experiments and task-specific fuel/chemistry execution sequences.
-- Added the Implementation application section and task-level Implementation tab.
-- Added implementation registers to exports and changed the large Excel export to on-demand generation.
-- Preserved the v4.2 cost baseline, licensing-path differences, schedule, password gate, and complete uncompressed JSON data.
+- Fixed Streamlit deployment cache invalidation for revised database manifests and shards.
+- Added a bundled-database reload control.
+- Prevented empty implementation collections from causing selectbox/dictionary lookup failures.
+- Added regression coverage for stale-cache tokens and missing optional implementation collections.
 
 ## 4.3.0 - 2026-08-18
 

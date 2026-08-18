@@ -1,6 +1,6 @@
 # Project-MSR access control
 
-Version 4.3.0 retains a password gate in front of the Streamlit application. The gate is evaluated before the bundled planning database is opened, scenario calculations are run, or any planner page is rendered.
+Version 4.3.1 retains a password gate in front of the Streamlit application. The gate is evaluated before the bundled planning database is opened, scenario calculations are run, or any planner page is rendered.
 
 ## Authentication behavior
 

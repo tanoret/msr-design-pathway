@@ -1,9 +1,9 @@
-# Validation record - Project-MSR v4.3.0
+# Validation record - Project-MSR application v4.3.1 / database v4.3.0
 
 - JSON Schema Draft 2020-12 validation: passed.
 - Database-integrity validation: passed.
 - Python compilation: passed.
-- Automated tests: **52 passed** using `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q`.
+- Automated tests: **54 passed** using `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q`.
 - All 13 authenticated application-section smoke flows: passed.
 - Shared tasks: 841.
 - Route tasks: 96.
@@ -19,3 +19,6 @@
 - The direct demonstrator package remains exactly $30.0 million non-labor; its fuel-material assumption is explicitly identified.
 - Plain JSON shards are below GitHub's safe file limit and reconstruct to the manifest semantic checksum.
 - Program schedule targets remain Q4 2026 mobilization, December 2028 demonstrator turnover, 2029 demonstration, January 2030 commercial construction, and December 2035 commercial operation.
+
+- Deployment cache token changes when the manifest content changes.
+- Implementation UI handles absent optional implementation collections without exceptions.

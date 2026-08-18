@@ -146,6 +146,14 @@ def load_sharded_database(manifest_path: str | Path, *, verify_semantic_hash: bo
     return validate_database(database)
 
 
+def _version_tuple(value: Any) -> tuple[int, int, int]:
+    parts: list[int] = []
+    for token in str(value or "").split(".")[:3]:
+        digits = "".join(char for char in token if char.isdigit())
+        parts.append(int(digits or 0))
+    return tuple((parts + [0, 0, 0])[:3])
+
+
 def validate_database(database: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     missing = sorted(REQUIRED_TOP_LEVEL_KEYS.difference(database))
@@ -199,6 +207,42 @@ def validate_database(database: dict[str, Any]) -> dict[str, Any]:
     if project.get("name") != "Project-MSR":
         errors.append("The project name must be 'Project-MSR'.")
 
+    # Version 4.3 introduced execution playbooks and task-level implementation
+    # plans. Validate these collections when a 4.3+ database declares them so a
+    # mixed application/database deployment fails clearly during loading rather
+    # than later inside an interactive tab. Older uploaded databases remain
+    # readable and are handled by the UI's compatibility empty state.
+    if _version_tuple((database.get("meta") or {}).get("version")) >= (4, 3, 0):
+        playbooks = database.get("implementation_playbooks")
+        fuel_plan = database.get("fuel_supply_plan")
+        chemistry_plan = database.get("chemistry_processing_plan")
+        closure_register = database.get("implementation_closure_register")
+        if not isinstance(playbooks, dict) or not playbooks:
+            errors.append("A v4.3+ database must include non-empty implementation_playbooks.")
+        if not isinstance(fuel_plan, dict) or not (fuel_plan.get("execution_phases") or []):
+            errors.append("A v4.3+ database must include fuel_supply_plan execution phases.")
+        if not isinstance(chemistry_plan, dict) or not (chemistry_plan.get("experiment_matrix") or []):
+            errors.append("A v4.3+ database must include the chemistry_processing_plan experiment matrix.")
+        if not isinstance(closure_register, list) or not closure_register:
+            errors.append("A v4.3+ database must include the implementation_closure_register.")
+
+        route_tasks = [
+            task
+            for module in (database.get("pathway_modules") or {}).values()
+            if isinstance(module, dict)
+            for stage in module.values()
+            if isinstance(stage, list)
+            for task in stage
+            if isinstance(task, dict)
+        ]
+        all_tasks = [task for task in (tasks or []) if isinstance(task, dict)] + route_tasks
+        implementation_count = sum(bool(task.get("implementation_plan")) for task in all_tasks)
+        expected_count = int((database.get("data_quality") or {}).get("implementation_ready_task_count") or 0)
+        if expected_count and implementation_count != expected_count:
+            errors.append(
+                f"Implementation-plan count mismatch: expected {expected_count}, found {implementation_count}."
+            )
+
     if errors:
         raise DatabaseValidationError(" ".join(errors))
     return database
@@ -218,11 +262,59 @@ def _load_database_uncached(path: str | Path = DEFAULT_DATABASE) -> dict[str, An
     return validate_database(payload)
 
 
+def _normalized_database_path(path: str | Path = DEFAULT_DATABASE) -> Path:
+    database_path = Path(path)
+    if database_path.is_dir():
+        database_path = database_path / "project_msr_database.manifest.json"
+    return database_path.resolve()
+
+
+def database_cache_token(path: str | Path = DEFAULT_DATABASE) -> str:
+    """Return a content-sensitive token for Streamlit's database cache.
+
+    Streamlit hashes function arguments, not the files a path points to.  The
+    manifest checksum is therefore passed into the cached loader so a deployed
+    data revision cannot reuse an older in-process database object merely
+    because the repository path stayed the same.
+    """
+    database_path = _normalized_database_path(path)
+    if not database_path.exists():
+        return f"missing:{database_path}"
+    if database_path.name.endswith(".manifest.json"):
+        manifest = _read_json(database_path)
+        if not isinstance(manifest, dict):
+            raise DatabaseValidationError("The Project-MSR manifest root must be a JSON object.")
+        return ":".join(
+            [
+                str(manifest.get("application_version") or ""),
+                str(manifest.get("database_version") or ""),
+                str(manifest.get("canonical_semantic_sha256") or ""),
+                file_sha256(database_path),
+            ]
+        )
+    stat = database_path.stat()
+    return f"{stat.st_size}:{stat.st_mtime_ns}:{file_sha256(database_path)}"
+
+
 # This read-only database is large. cache_resource keeps one shared in-process
-# object instead of serializing and copying it for every Streamlit session.
+# object instead of serializing and copying it for every Streamlit session. The
+# cache token ensures repository data revisions invalidate the cached object.
 @st.cache_resource(show_spinner=False)
+def _load_database_cached(path_string: str, cache_token: str) -> dict[str, Any]:
+    del cache_token  # used only as a content-sensitive cache key
+    return _load_database_uncached(path_string)
+
+
 def load_database(path: str | Path = DEFAULT_DATABASE) -> dict[str, Any]:
-    return _load_database_uncached(path)
+    database_path = _normalized_database_path(path)
+    return _load_database_cached(str(database_path), database_cache_token(database_path))
+
+
+def clear_database_cache() -> None:
+    """Clear the bundled-database cache when supported by the Streamlit runtime."""
+    clear = getattr(_load_database_cached, "clear", None)
+    if callable(clear):
+        clear()
 
 
 def load_database_bytes(payload: bytes) -> dict[str, Any]:

@@ -112,6 +112,30 @@ sys.modules["streamlit"] = _FakeStreamlit()
 
 import app  # noqa: E402
 
+if os.environ.get("PROJECT_MSR_SMOKE_EMPTY_IMPLEMENTATION") == "1":
+    _original_load_database = app.load_database
+
+    def _load_database_without_implementation(*args: Any, **kwargs: Any):
+        import copy
+
+        database = copy.deepcopy(_original_load_database(*args, **kwargs))
+        for key in [
+            "implementation_playbooks",
+            "fuel_supply_plan",
+            "chemistry_processing_plan",
+            "implementation_closure_register",
+        ]:
+            database.pop(key, None)
+        for task in database.get("tasks") or []:
+            task.pop("implementation_plan", None)
+        for module in (database.get("pathway_modules") or {}).values():
+            for stage_tasks in module.values():
+                for task in stage_tasks or []:
+                    task.pop("implementation_plan", None)
+        return database
+
+    app.load_database = _load_database_without_implementation
+
 def run_page(page: str) -> None:
     os.environ["PROJECT_MSR_SMOKE_PAGE"] = page
     for _ in range(3):

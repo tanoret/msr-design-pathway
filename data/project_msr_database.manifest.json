@@ -1,7 +1,7 @@
 {
   "format": "project-msr-sharded-json",
   "format_version": 1,
-  "application_version": "4.3.0",
+  "application_version": "4.3.1",
   "database_version": "4.3.0",
   "database_name": "Project-MSR Integrated Engineering, Demonstration, Licensing, Resource and Financial Database",
   "storage": "plain UTF-8 JSON shards; no gzip, binary encoding, or data reduction",

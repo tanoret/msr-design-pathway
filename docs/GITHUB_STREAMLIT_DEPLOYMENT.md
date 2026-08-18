@@ -4,7 +4,7 @@
 
 The former `data/project_msr_database.json` file was approximately 184 MB. GitHub rejects individual files above 100 MB before accepting a push.
 
-Version 4.3.0 preserves the complete database as ordinary, readable JSON files:
+Version 4.3.1 preserves the complete database as ordinary, readable JSON files:
 
 - one core JSON file;
 - five task JSON files;
@@ -14,7 +14,7 @@ The largest file is approximately 44 MB. Git LFS, gzip, binary encoding, and rem
 
 ## Replace a rejected first commit
 
-The remote repository is empty because the push was rejected. The safest procedure is to replace the local unpushed history with a clean commit that contains the v4.3.0 package.
+The remote repository is empty because the push was rejected. The safest procedure is to replace the local unpushed history with a clean commit that contains the v4.3.1 package.
 
 From the repository root:
 
@@ -26,7 +26,7 @@ cp .streamlit/secrets.toml /tmp/project_msr_secrets.toml 2>/dev/null || true
 git checkout --orphan clean-main
 git rm -rf --cached .
 git add .
-git commit -m "Release Project-MSR Planner v4.3.0"
+git commit -m "Release Project-MSR Planner v4.3.1"
 git branch -M main
 git push -u origin main
 
@@ -69,7 +69,7 @@ For an empty remote, the orphan-branch procedure is simpler and less error-prone
 
 ## Streamlit Community Cloud
 
-1. Push the unpacked v4.3.0 repository to GitHub.
+1. Push the unpacked v4.3.1 repository to GitHub.
 2. In Streamlit Community Cloud, create or update the application using `app.py` as the entry point.
 3. Add the `[auth]` values already configured for the deployment, or generate a new hash with `python scripts/set_password.py` and copy it to the application's Secrets settings.
 4. Reboot the application after saving secrets.
@@ -86,3 +86,8 @@ streamlit run app.py
 ```
 
 The reconstruction utility checks the manifest's canonical semantic checksum before writing the large local file.
+
+
+## Implementation-tab deployment hotfix
+
+Version 4.3.1 makes the database cache content-sensitive. After pushing the release, reboot the Streamlit application once. If an existing browser session still shows zero implementation records, open the Database control in the sidebar and select **Reload bundled database**. The expected bundled values are 11 playbooks, 25 chemistry experiments, 6 fuel phases, and implementation plans on all active tasks.

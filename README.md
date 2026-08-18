@@ -100,7 +100,7 @@ PROJECT_MSR_SMOKE_ALL=1 python scripts/smoke_test_app_without_streamlit.py
 
 ## Release
 
-- Application version: **4.3.0**
+- Application version: **4.3.1**
 - Database version: **4.3.0**
 - Shared activities: **841**
 - Route-specific activities: **96**
@@ -110,7 +110,7 @@ PROJECT_MSR_SMOKE_ALL=1 python scripts/smoke_test_app_without_streamlit.py
 - Implementation playbooks: **11**
 - Chemistry/processing experiments: **25**
 - Program-level implementation closure items: **8**
-- High-consequence bespoke implementation packages: **19**
-- Automated tests: **52**
+- High-consequence bespoke implementation packages: **21**
+- Automated tests: **54**
 
-See `RELEASE_NOTES_4.3.0.md`, `docs/IMPLEMENTATION_EXECUTION_PLAN.md`, `docs/FUEL_SUPPLY_AND_PROCUREMENT.md`, `docs/CHEMISTRY_AND_PROCESSING_VALIDATION.md`, `docs/IMPLEMENTATION_GAP_REGISTER.md`, `docs/ENGINEERING_WORK_PACKAGES.md`, `docs/COST_ESTIMATING_BASIS.md`, `docs/LICENSING_PATHS.md`, and `docs/VALIDATION.md`.
+See `RELEASE_NOTES_4.3.1.md`, `docs/IMPLEMENTATION_EXECUTION_PLAN.md`, `docs/FUEL_SUPPLY_AND_PROCUREMENT.md`, `docs/CHEMISTRY_AND_PROCESSING_VALIDATION.md`, `docs/IMPLEMENTATION_GAP_REGISTER.md`, `docs/ENGINEERING_WORK_PACKAGES.md`, `docs/COST_ESTIMATING_BASIS.md`, `docs/LICENSING_PATHS.md`, and `docs/VALIDATION.md`.

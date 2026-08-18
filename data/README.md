@@ -24,7 +24,7 @@ The generated `data/project_msr_database.full.json` is intentionally ignored by 
 ## Rebuild shards
 
 ```bash
-python scripts/shard_database.py data/project_msr_database.full.json --application-version 4.3.0
+python scripts/shard_database.py data/project_msr_database.full.json --application-version 4.3.1
 ```
 
 Sharding changes only storage layout; it does not gzip, encode, minify, summarize, or remove data.

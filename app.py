@@ -46,7 +46,13 @@ from src.components import (
     route_graph_figure,
     style_plotly_figure,
 )
-from src.data_loader import DEFAULT_DATABASE, DatabaseValidationError, load_database, load_database_bytes
+from src.data_loader import (
+    DEFAULT_DATABASE,
+    DatabaseValidationError,
+    clear_database_cache,
+    load_database,
+    load_database_bytes,
+)
 from src.pathway_engine import (
     DEMONSTRATOR_PATH,
     EXECUTABLE_POWER_PATHS,
@@ -177,6 +183,14 @@ def _fingerprint(database: dict[str, Any]) -> str:
 def select_database() -> tuple[dict[str, Any], str]:
     with st.sidebar.expander("Database", expanded=False):
         source = st.radio("Source", ["Bundled database", "Upload compatible JSON"], index=0)
+        if source == "Bundled database" and st.button(
+            "Reload bundled database",
+            key="reload_project_msr_database",
+            help="Clear the in-process database cache and reload the current repository manifest and shards.",
+            use_container_width=True,
+        ):
+            clear_database_cache()
+            st.rerun()
         try:
             if source == "Upload compatible JSON":
                 uploaded = st.file_uploader("Project-MSR JSON", type=["json"])
@@ -1175,12 +1189,41 @@ def experiments_tab(scenario: dict[str, Any]) -> None:
                         else:
                             st.write(str(value))
 
-def implementation_tab(database: dict[str, Any], scenario: dict[str, Any]) -> None:
-    playbooks = database.get("implementation_playbooks") or {}
-    chemistry = database.get("chemistry_processing_plan") or {}
-    fuel = database.get("fuel_supply_plan") or {}
+def implementation_collections(database: dict[str, Any], scenario: dict[str, Any]) -> dict[str, Any]:
+    """Resolve implementation collections with scenario fallbacks.
+
+    Older uploaded databases may not contain the v4.3 collections.  Returning
+    explicit empty structures keeps the UI readable and prevents empty-widget
+    selections from becoming dictionary lookups.
+    """
+    playbooks = database.get("implementation_playbooks") or scenario.get("implementation_playbooks") or {}
+    chemistry = database.get("chemistry_processing_plan") or scenario.get("chemistry_processing_plan") or {}
+    fuel = database.get("fuel_supply_plan") or scenario.get("fuel_supply_plan") or {}
+    closure_register = (
+        database.get("implementation_closure_register")
+        or scenario.get("implementation_closure_register")
+        or []
+    )
     active_tasks = scenario.get("tasks") or []
     implementation_tasks = [task for task in active_tasks if task.get("implementation_plan")]
+    return {
+        "playbooks": playbooks if isinstance(playbooks, dict) else {},
+        "chemistry": chemistry if isinstance(chemistry, dict) else {},
+        "fuel": fuel if isinstance(fuel, dict) else {},
+        "closure_register": closure_register if isinstance(closure_register, list) else [],
+        "active_tasks": active_tasks,
+        "implementation_tasks": implementation_tasks,
+    }
+
+
+def implementation_tab(database: dict[str, Any], scenario: dict[str, Any]) -> None:
+    collections = implementation_collections(database, scenario)
+    playbooks = collections["playbooks"]
+    chemistry = collections["chemistry"]
+    fuel = collections["fuel"]
+    closure_register = collections["closure_register"]
+    active_tasks = collections["active_tasks"]
+    implementation_tasks = collections["implementation_tasks"]
     chemistry_tests = chemistry.get("experiment_matrix") or []
     render_section_header(
         "Implementation playbooks and execution plans",
@@ -1194,7 +1237,23 @@ def implementation_tab(database: dict[str, Any], scenario: dict[str, Any]) -> No
         {"label": "Fuel phases", "value": f"{len(fuel.get('execution_phases') or []):,}", "help": "Requirements through disposition"},
     ])
 
-    closure_register = database.get("implementation_closure_register") or []
+    missing_collections = []
+    if not implementation_tasks:
+        missing_collections.append("task implementation plans")
+    if not playbooks:
+        missing_collections.append("program playbooks")
+    if not chemistry_tests:
+        missing_collections.append("chemistry experiments")
+    if not (fuel.get("execution_phases") or []):
+        missing_collections.append("fuel-supply phases")
+    if missing_collections:
+        render_note(
+            "The loaded database does not provide: "
+            + ", ".join(missing_collections)
+            + ". Choose Bundled database and use Reload bundled database in the sidebar, "
+            "or upload a v4.3-compatible database."
+        )
+
     fuel_tab, chemistry_tab, playbook_tab, closure_tab, register_tab = st.tabs([
         "Fuel supply and procurement",
         "Chemistry and salt processing",
@@ -1365,23 +1424,44 @@ def implementation_tab(database: dict[str, Any], scenario: dict[str, Any]) -> No
                         st.dataframe(tasks_frame(linked)[["WBS ID","Task","Start","Finish","Implementation Summary"]], use_container_width=True, hide_index=True, height=min(300, 80 + 50*len(linked)))
 
     with playbook_tab:
-        keys = [key for key in playbooks if key not in {"PB-FUEL-01","PB-CHEM-01"}]
-        selected_key = st.selectbox("Implementation playbook", keys, format_func=lambda key: f"{key} · {playbooks[key].get('title','')}", key="implementation_playbook")
-        playbook = playbooks[selected_key]
-        st.markdown(f"### {playbook.get('title')}")
-        st.write(playbook.get("objective") or "—")
-        sequence = playbook.get("execution_sequence") or playbook.get("campaign_sequence") or []
-        if sequence:
-            st.dataframe(pd.DataFrame([{"Step": i+1,"Execution sequence": value} for i,value in enumerate(sequence)]), use_container_width=True, hide_index=True, height=min(460, 90+52*len(sequence)))
-        linked_ids = set(playbook.get("linked_task_ids") or [])
-        linked = [task for task in active_tasks if task.get("id") in linked_ids]
-        if linked:
-            st.markdown("#### Linked active work packages")
-            st.dataframe(tasks_frame(linked)[["WBS ID","Task","Engineering Domain","Start","Finish","Implementation Summary"]], use_container_width=True, hide_index=True, height=440)
-        if playbook.get("source_urls"):
-            st.markdown("#### Source and precedent links")
-            for url in playbook.get("source_urls") or []:
-                st.code(url, language=None)
+        keys = [key for key in playbooks if key not in {"PB-FUEL-01", "PB-CHEM-01"}]
+        if not keys:
+            render_note(
+                "No additional implementation playbooks are present in the loaded database. "
+                "Use Reload bundled database in the sidebar after deploying a newer database revision."
+            )
+        else:
+            selected_key = st.selectbox(
+                "Implementation playbook",
+                keys,
+                format_func=lambda key: f"{key} · {playbooks.get(key, {}).get('title', '')}",
+                key="implementation_playbook",
+            )
+            playbook = playbooks.get(selected_key) or {}
+            st.markdown(f"### {playbook.get('title') or selected_key}")
+            st.write(playbook.get("objective") or "—")
+            sequence = playbook.get("execution_sequence") or playbook.get("campaign_sequence") or []
+            if sequence:
+                st.dataframe(
+                    pd.DataFrame([{"Step": i + 1, "Execution sequence": value} for i, value in enumerate(sequence)]),
+                    use_container_width=True,
+                    hide_index=True,
+                    height=min(460, 90 + 52 * len(sequence)),
+                )
+            linked_ids = set(playbook.get("linked_task_ids") or [])
+            linked = [task for task in active_tasks if task.get("id") in linked_ids]
+            if linked:
+                st.markdown("#### Linked active work packages")
+                st.dataframe(
+                    tasks_frame(linked)[["WBS ID", "Task", "Engineering Domain", "Start", "Finish", "Implementation Summary"]],
+                    use_container_width=True,
+                    hide_index=True,
+                    height=440,
+                )
+            if playbook.get("source_urls"):
+                st.markdown("#### Source and precedent links")
+                for url in playbook.get("source_urls") or []:
+                    st.code(url, language=None)
 
     with closure_tab:
         st.markdown("### Decisions and commitments required to convert the planning basis into a committed execution baseline")
@@ -1425,33 +1505,76 @@ def implementation_tab(database: dict[str, Any], scenario: dict[str, Any]) -> No
             st.info("No program-level closure register is present in the loaded database.")
 
     with register_tab:
-        frame = tasks_frame(implementation_tasks)
-        controls = st.columns([1.2,1,1])
-        query = controls[0].text_input("Search implementation plans", key="impl_register_search")
-        domains = controls[1].multiselect("Engineering domain", sorted(frame["Engineering Domain"].dropna().unique()), key="impl_register_domain")
-        playbook_options = sorted({pb for task in implementation_tasks for pb in (task.get("implementation_plan") or {}).get("linked_playbooks",[])})
-        selected_playbooks = controls[2].multiselect("Linked playbook", playbook_options, key="impl_register_playbook")
-        view = frame.copy()
-        if query:
-            mask = view[["WBS ID","Task","Implementation Summary","Implementation Readiness"]].astype(str).apply(lambda col: col.str.contains(query, case=False, na=False)).any(axis=1)
-            view = view[mask]
-        if domains:
-            view = view[view["Engineering Domain"].isin(domains)]
-        if selected_playbooks:
-            view = view[view["Linked Playbooks"].apply(lambda value: any(pb in str(value) for pb in selected_playbooks))]
-        cols = ["WBS ID","Task","Concept","Engineering Domain","Start","Finish","Implementation Steps Count","Long-Lead Items Count","Decision Points Count","Linked Playbooks","Implementation Summary"]
-        st.dataframe(view[cols], use_container_width=True, hide_index=True, height=560)
-        st.download_button(
-            "Download filtered implementation register",
-            data=view.to_csv(index=False).encode("utf-8"),
-            file_name="project_msr_implementation_register.csv",
-            mime="text/csv",
-            key="download_impl_register",
-        )
-        if not view.empty:
-            ids = view["WBS ID"].astype(str).tolist()
-            selected = st.selectbox("Open implementation-ready task", ids, format_func=lambda tid: f"{tid} · {next(t['name'] for t in implementation_tasks if str(t['id'])==tid)}", key="impl_register_task")
-            render_task_detail(next(task for task in implementation_tasks if str(task["id"]) == selected))
+        if not implementation_tasks:
+            render_note(
+                "The loaded database does not contain task-level implementation plans. "
+                "Reload the bundled database or upload a v4.3-compatible database."
+            )
+        else:
+            frame = tasks_frame(implementation_tasks)
+            controls = st.columns([1.2, 1, 1])
+            query = controls[0].text_input("Search implementation plans", key="impl_register_search")
+            domains = controls[1].multiselect(
+                "Engineering domain",
+                sorted(frame["Engineering Domain"].dropna().unique()),
+                key="impl_register_domain",
+            )
+            playbook_options = sorted(
+                {
+                    pb
+                    for task in implementation_tasks
+                    for pb in (task.get("implementation_plan") or {}).get("linked_playbooks", [])
+                }
+            )
+            selected_playbooks = controls[2].multiselect(
+                "Linked playbook",
+                playbook_options,
+                key="impl_register_playbook",
+            )
+            view = frame.copy()
+            if query:
+                mask = view[["WBS ID", "Task", "Implementation Summary", "Implementation Readiness"]].astype(str).apply(
+                    lambda col: col.str.contains(query, case=False, na=False)
+                ).any(axis=1)
+                view = view[mask]
+            if domains:
+                view = view[view["Engineering Domain"].isin(domains)]
+            if selected_playbooks:
+                view = view[
+                    view["Linked Playbooks"].apply(
+                        lambda value: any(pb in str(value) for pb in selected_playbooks)
+                    )
+                ]
+            cols = [
+                "WBS ID",
+                "Task",
+                "Concept",
+                "Engineering Domain",
+                "Start",
+                "Finish",
+                "Implementation Steps Count",
+                "Long-Lead Items Count",
+                "Decision Points Count",
+                "Linked Playbooks",
+                "Implementation Summary",
+            ]
+            st.dataframe(view[cols], use_container_width=True, hide_index=True, height=560)
+            st.download_button(
+                "Download filtered implementation register",
+                data=view.to_csv(index=False).encode("utf-8"),
+                file_name="project_msr_implementation_register.csv",
+                mime="text/csv",
+                key="download_impl_register",
+            )
+            if not view.empty:
+                ids = view["WBS ID"].astype(str).tolist()
+                selected = st.selectbox(
+                    "Open implementation-ready task",
+                    ids,
+                    format_func=lambda tid: f"{tid} · {next(t['name'] for t in implementation_tasks if str(t['id']) == tid)}",
+                    key="impl_register_task",
+                )
+                render_task_detail(next(task for task in implementation_tasks if str(task["id"]) == selected))
 
 def risks_gates_tab(scenario: dict[str, Any]) -> None:
     render_section_header("Risks, decision gates, and responsibility", "Integrated risk register, design/readiness gates, organizational assignments, and RACI.", "Controls")
