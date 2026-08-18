@@ -69,7 +69,7 @@ def write_sharded_database(
     output_dir: str | Path,
     *,
     base_name: str = DEFAULT_BASE_NAME,
-    application_version: str = "4.2.2",
+    application_version: str = "4.3.0",
     max_task_shard_bytes: int = DEFAULT_MAX_TASK_SHARD_BYTES,
 ) -> Path:
     """Write a complete database as plain JSON shards plus a manifest.

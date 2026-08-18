@@ -4,17 +4,17 @@
 
 The former `data/project_msr_database.json` file was approximately 184 MB. GitHub rejects individual files above 100 MB before accepting a push.
 
-Version 4.2.2 preserves the complete database as ordinary, readable JSON files:
+Version 4.3.0 preserves the complete database as ordinary, readable JSON files:
 
 - one core JSON file;
-- four task JSON files;
+- five task JSON files;
 - one manifest JSON file.
 
 The largest file is approximately 44 MB. Git LFS, gzip, binary encoding, and remote downloads are not required.
 
 ## Replace a rejected first commit
 
-The remote repository is empty because the push was rejected. The safest procedure is to replace the local unpushed history with a clean commit that contains the v4.2.2 package.
+The remote repository is empty because the push was rejected. The safest procedure is to replace the local unpushed history with a clean commit that contains the v4.3.0 package.
 
 From the repository root:
 
@@ -26,7 +26,7 @@ cp .streamlit/secrets.toml /tmp/project_msr_secrets.toml 2>/dev/null || true
 git checkout --orphan clean-main
 git rm -rf --cached .
 git add .
-git commit -m "Release Project-MSR Planner v4.2.2"
+git commit -m "Release Project-MSR Planner v4.3.0"
 git branch -M main
 git push -u origin main
 
@@ -69,9 +69,9 @@ For an empty remote, the orphan-branch procedure is simpler and less error-prone
 
 ## Streamlit Community Cloud
 
-1. Push the unpacked v4.2.2 repository to GitHub.
+1. Push the unpacked v4.3.0 repository to GitHub.
 2. In Streamlit Community Cloud, create or update the application using `app.py` as the entry point.
-3. Add the `[auth]` values from the local `.streamlit/secrets.toml` to the application's Secrets settings.
+3. Add the `[auth]` values already configured for the deployment, or generate a new hash with `python scripts/set_password.py` and copy it to the application's Secrets settings.
 4. Reboot the application after saving secrets.
 
 At startup, the application reads `data/project_msr_database.manifest.json`, verifies each JSON part, reconstructs all database collections, and exposes the same planner content as the former monolithic file.
@@ -81,7 +81,7 @@ At startup, the application reads `data/project_msr_database.manifest.json`, ver
 ```bash
 python scripts/validate_database.py
 python scripts/reconstruct_database.py --output /tmp/project_msr_database.full.json
-pytest -q
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q
 streamlit run app.py
 ```
 

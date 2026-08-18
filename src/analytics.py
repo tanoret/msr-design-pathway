@@ -19,6 +19,7 @@ def tasks_frame(tasks: list[dict[str, Any]]) -> pd.DataFrame:
         resources = task.get("resources") or {}
         execution = task.get("execution") or {}
         package = task.get("engineering_work_package") or {}
+        implementation = task.get("implementation_plan") or {}
         rows.append(
             {
                 "WBS ID": task.get("id"),
@@ -74,6 +75,14 @@ def tasks_frame(tasks: list[dict[str, Any]]) -> pd.DataFrame:
                 "Deliverables": "\n".join(execution.get("deliverables_and_records") or []),
                 "Acceptance Criteria": "\n".join(execution.get("acceptance_exit_criteria") or []),
                 "Regulatory Basis": task.get("regulatory_basis"),
+                "Implementation Ready": bool(implementation),
+                "Implementation Readiness": implementation.get("implementation_readiness"),
+                "Implementation Summary": implementation.get("implementation_summary"),
+                "Implementation Steps Count": len(implementation.get("implementation_steps") or []),
+                "Procurement Actions Count": len(implementation.get("procurement_and_contracting_actions") or []),
+                "Long-Lead Items Count": len(implementation.get("long_lead_items") or []),
+                "Decision Points Count": len(implementation.get("decision_points") or []),
+                "Linked Playbooks": ", ".join(implementation.get("linked_playbooks") or []),
             }
         )
     frame = pd.DataFrame(rows)
@@ -373,6 +382,64 @@ def engineering_work_package_frames(tasks: list[dict[str, Any]]) -> dict[str, pd
     }
 
 
+def implementation_plan_frames(tasks: list[dict[str, Any]]) -> dict[str, pd.DataFrame]:
+    summaries: list[dict[str, Any]] = []
+    steps: list[dict[str, Any]] = []
+    authorizations: list[dict[str, Any]] = []
+    long_leads: list[dict[str, Any]] = []
+    decisions: list[dict[str, Any]] = []
+    field_work: list[dict[str, Any]] = []
+    contingencies: list[dict[str, Any]] = []
+    sources: list[dict[str, Any]] = []
+    for task in tasks:
+        plan = task.get("implementation_plan") or {}
+        common = {
+            "WBS ID": task.get("id"),
+            "Task": task.get("name"),
+            "Concept": task.get("concept"),
+            "Execution Stream": task.get("execution_stream"),
+            "Scenario Route": task.get("scenario_route") or "Shared program baseline",
+        }
+        summaries.append({
+            **common,
+            "Implementation Readiness": plan.get("implementation_readiness"),
+            "Implementation Summary": plan.get("implementation_summary"),
+            "Delivery Strategy": str(plan.get("delivery_strategy") or {}),
+            "Make Buy Partner": str(plan.get("make_buy_partner_decision") or {}),
+            "Procurement Actions": "\n".join(plan.get("procurement_and_contracting_actions") or []),
+            "Implementation Records": "\n".join(plan.get("implementation_records") or []),
+            "Open Decisions": "\n".join(str(item) for item in (plan.get("open_decisions") or [])),
+            "Linked Playbooks": ", ".join(plan.get("linked_playbooks") or []),
+            "Quality Score": plan.get("implementation_quality_score"),
+        })
+        for row in plan.get("implementation_steps") or []:
+            flat = {**common, **row}
+            for field in ["supporting_roles", "required_inputs", "tools_equipment", "outputs_and_records"]:
+                flat[field] = "\n".join(row.get(field) or [])
+            steps.append(flat)
+        for row in plan.get("authorizations_and_prerequisites") or []:
+            authorizations.append({**common, **row})
+        for row in plan.get("long_lead_items") or []:
+            long_leads.append({**common, **row})
+        for row in plan.get("decision_points") or []:
+            decisions.append({**common, **row})
+        for row in plan.get("field_lab_or_vendor_activities") or []:
+            field_work.append({**common, **row})
+        for row in plan.get("fallbacks_and_contingencies") or []:
+            contingencies.append({**common, **row})
+        for row in plan.get("implementation_source_basis") or []:
+            sources.append({**common, **row})
+    return {
+        "Implementation Summary": pd.DataFrame(summaries),
+        "Implementation Steps": pd.DataFrame(steps),
+        "Implementation Authorizations": pd.DataFrame(authorizations),
+        "Implementation Long Leads": pd.DataFrame(long_leads),
+        "Implementation Decisions": pd.DataFrame(decisions),
+        "Implementation Field Work": pd.DataFrame(field_work),
+        "Implementation Contingencies": pd.DataFrame(contingencies),
+        "Implementation Sources": pd.DataFrame(sources),
+    }
+
 def scenario_export_tables(scenario: dict[str, Any]) -> dict[str, pd.DataFrame]:
     tables = {
         "Tasks": tasks_frame(scenario["tasks"]),
@@ -385,4 +452,5 @@ def scenario_export_tables(scenario: dict[str, Any]) -> dict[str, pd.DataFrame]:
         "Dependencies": dependency_edges_frame(scenario["tasks"]),
     }
     tables.update(engineering_work_package_frames(scenario["tasks"]))
+    tables.update(implementation_plan_frames(scenario["tasks"]))
     return tables

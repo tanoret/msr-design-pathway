@@ -873,6 +873,9 @@ def build_scenario(database: dict[str, Any], options: ScenarioOptions | None = N
         "leadership_governance": copy.deepcopy(database.get("leadership_governance") or []),
         "raci": copy.deepcopy(database.get("raci") or []),
         "test_matrices": copy.deepcopy(database.get("test_matrices") or {}),
+        "implementation_playbooks": copy.deepcopy(database.get("implementation_playbooks") or {}),
+        "fuel_supply_plan": copy.deepcopy(database.get("fuel_supply_plan") or {}),
+        "chemistry_processing_plan": copy.deepcopy(database.get("chemistry_processing_plan") or {}),
         "regulatory_crosswalk": copy.deepcopy(database.get("regulatory_crosswalk") or []),
         "sources": copy.deepcopy(database.get("sources") or []),
     }

@@ -1,35 +1,30 @@
 # Project-MSR data
 
-The complete Project-MSR planning database is stored as **plain, uncompressed UTF-8 JSON shards** so every repository file remains below GitHub's 100 MB per-file limit.
+The complete Project-MSR v4.3.0 database is stored as **plain, uncompressed UTF-8 JSON shards** so every repository file remains below GitHub's per-file limit.
 
-## Database files
+## Contents
 
-- `project_msr_database.manifest.json` - ordered manifest, record counts, file sizes, SHA-256 checksums, and the canonical semantic checksum for the complete logical database.
-- `project_msr_database.core.json` - every top-level database collection except the shared `tasks` array.
-- `project_msr_database.tasks.001.json` through `project_msr_database.tasks.004.json` - the complete shared task array in original order.
-- `project_msr_database.schema.json` - JSON Schema for the reconstructed database.
-- `task_cost_audit_v4_2.csv` - flat task-by-task cost register.
+- `project_msr_database.manifest.json` - ordered manifest, counts, sizes, per-file hashes, and semantic checksum.
+- `project_msr_database.core.json` - all top-level collections except the shared task array.
+- `project_msr_database.tasks.001.json` onward - all shared tasks in original order.
+- `project_msr_database.schema.json` - Draft 2020-12 JSON Schema.
+- `task_cost_audit_v4_2.csv` - v4.2 bottom-up cost audit retained because v4.3 does not change the accounting estimate.
+- `implementation_task_audit_v4_3.csv` - 937-row implementation-readiness, step, decision, long-lead, playbook, and hold-point register.
 
-No field, task, resource assignment, cost record, engineering work package, licensing module, milestone, risk, test matrix, source, or supporting collection has been removed or summarized. The Streamlit loader reconstructs the same in-memory object that was previously held in the 184 MB monolithic JSON file.
+Nothing has been removed or reduced. The database includes **841** shared activities, **96** route activities, **3138** shared assignments, **30** roles, **11** implementation playbooks, and **25** chemistry/processing experiments, **8** program-level closure items, and **21** bespoke high-consequence execution packages. All **937** activities include an Engineering Work Package, bottom-up task-cost basis, and implementation plan.
 
-The manifest's canonical semantic SHA-256 is checked by the reconstruction utility and by automated tests. Each shard is also protected by an individual SHA-256 checksum and declared file size.
-
-## Reconstruct one monolithic JSON file
-
-A single large file can be recreated locally when needed:
+## Reconstruct one monolithic file
 
 ```bash
 python scripts/reconstruct_database.py
 ```
 
-This writes `data/project_msr_database.full.json`. The reconstructed file is intentionally excluded from Git because it exceeds GitHub's per-file limit.
+The generated `data/project_msr_database.full.json` is intentionally ignored by Git because it exceeds GitHub's per-file limit.
 
-## Rebuild the shards from a monolithic source
+## Rebuild shards
 
 ```bash
-python scripts/shard_database.py /path/to/project_msr_database.json
+python scripts/shard_database.py data/project_msr_database.full.json --application-version 4.3.0
 ```
 
-The sharding process changes only the storage layout. It does not gzip, minify, encode, or reduce the planning content.
-
-The bundled database is version **4.2.0**. It contains **841** shared activities, **96** route activities, **3,138** shared assignments, and **30** resource roles. Every one of the **937** activities carries its complete Engineering Work Package and bottom-up cost basis.
+Sharding changes only storage layout; it does not gzip, encode, minify, summarize, or remove data.

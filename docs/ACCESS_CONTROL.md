@@ -1,6 +1,6 @@
 # Project-MSR access control
 
-Version 4.2.2 retains a password gate in front of the Streamlit application. The gate is evaluated before the bundled planning database is opened, scenario calculations are run, or any planner page is rendered.
+Version 4.3.0 retains a password gate in front of the Streamlit application. The gate is evaluated before the bundled planning database is opened, scenario calculations are run, or any planner page is rendered.
 
 ## Authentication behavior
 
@@ -15,7 +15,7 @@ Version 4.2.2 retains a password gate in front of the Streamlit application. The
 
 ## Local package
 
-The release package includes `.streamlit/secrets.toml` with a PBKDF2-SHA256 hash for the requested release password. The plaintext password is not stored in the application source or secrets file.
+The release package includes `.streamlit/secrets.toml.example`, not an active secret. Generate `.streamlit/secrets.toml` locally with `python scripts/set_password.py`, or place the hash in the deployment secret manager. The active secret file remains excluded from Git and from the release archive.
 
 Run locally with:
 

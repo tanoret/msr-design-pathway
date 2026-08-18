@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://project-msr.local/schema/project_msr_database-4.2.0.json",
-  "title": "Project-MSR Integrated Planner Database Schema v4.2.0",
+  "$id": "https://project-msr.local/schema/project_msr_database-4.3.0.json",
+  "title": "Project-MSR Integrated Planner Database Schema v4.3.0",
   "type": "object",
   "required": [
     "meta",
@@ -19,7 +19,11 @@
     "data_quality",
     "licensing_path_table",
     "route_cost_model",
-    "planning_profile"
+    "planning_profile",
+    "implementation_playbooks",
+    "fuel_supply_plan",
+    "chemistry_processing_plan",
+    "implementation_closure_register"
   ],
   "properties": {
     "meta": {
@@ -31,7 +35,10 @@
         "project_start",
         "project_end",
         "currency",
-        "cost_units"
+        "cost_units",
+        "application_version",
+        "engineering_work_package_schema",
+        "implementation_plan_schema"
       ],
       "properties": {
         "name": {
@@ -39,10 +46,10 @@
           "minLength": 1
         },
         "version": {
-          "const": "4.2.0"
+          "const": "4.3.0"
         },
         "application_version": {
-          "const": "4.2.0"
+          "const": "4.3.0"
         },
         "generated": {
           "type": "string",
@@ -64,7 +71,10 @@
           "const": "internal_planning"
         },
         "engineering_work_package_schema": {
-          "const": "4.2"
+          "const": "4.3"
+        },
+        "implementation_plan_schema": {
+          "const": "1.0"
         }
       },
       "additionalProperties": true
@@ -356,7 +366,7 @@
       ],
       "properties": {
         "version": {
-          "const": "4.2.0"
+          "const": "4.3.0"
         },
         "project_start": {
           "const": "2026-10-01"
@@ -398,6 +408,105 @@
         }
       },
       "additionalProperties": true
+    },
+    "implementation_playbooks": {
+      "type": "object",
+      "minProperties": 8,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "fuel_supply_plan": {
+      "type": "object",
+      "required": [
+        "playbook_id",
+        "title",
+        "objective"
+      ],
+      "additionalProperties": true
+    },
+    "chemistry_processing_plan": {
+      "type": "object",
+      "required": [
+        "playbook_id",
+        "title",
+        "objective",
+        "experiment_matrix"
+      ],
+      "properties": {
+        "experiment_matrix": {
+          "type": "array",
+          "minItems": 25,
+          "items": {
+            "type": "object",
+            "required": [
+              "test_id",
+              "campaign",
+              "objective",
+              "configuration",
+              "material_stage",
+              "primary_measurements",
+              "analytical_methods",
+              "acceptance_basis",
+              "model_or_decision_supported",
+              "linked_task_ids",
+              "planned_window",
+              "facility_strategy",
+              "required_records"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "implementation_closure_register": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "closure_id",
+          "closure_item",
+          "work_required",
+          "accountable_functions",
+          "need_date",
+          "closure_evidence",
+          "status"
+        ],
+        "properties": {
+          "closure_id": {
+            "type": "string",
+            "minLength": 4
+          },
+          "closure_item": {
+            "type": "string",
+            "minLength": 10
+          },
+          "work_required": {
+            "type": "string",
+            "minLength": 40
+          },
+          "accountable_functions": {
+            "type": "string",
+            "minLength": 5
+          },
+          "need_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "closure_evidence": {
+            "type": "string",
+            "minLength": 20
+          },
+          "status": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "additionalProperties": true
+      }
     }
   },
   "additionalProperties": true,
@@ -502,7 +611,8 @@
         "cost",
         "resources",
         "execution",
-        "engineering_work_package"
+        "engineering_work_package",
+        "implementation_plan"
       ],
       "properties": {
         "id": {
@@ -815,6 +925,9 @@
         },
         "engineering_work_package": {
           "$ref": "#/$defs/engineeringWorkPackage"
+        },
+        "implementation_plan": {
+          "$ref": "#/$defs/implementationPlan"
         }
       },
       "not": {
@@ -1196,6 +1309,309 @@
         "fte_years": {
           "type": "number",
           "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "implementationStep": {
+      "type": "object",
+      "required": [
+        "step_id",
+        "action",
+        "responsible_role",
+        "work_location",
+        "required_inputs",
+        "detailed_guidance",
+        "tools_equipment",
+        "outputs_and_records",
+        "acceptance_condition"
+      ],
+      "properties": {
+        "step_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "action": {
+          "type": "string",
+          "minLength": 10
+        },
+        "responsible_role": {
+          "type": "string",
+          "minLength": 2
+        },
+        "supporting_roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "work_location": {
+          "type": "string",
+          "minLength": 10
+        },
+        "required_inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "detailed_guidance": {
+          "type": "string",
+          "minLength": 80
+        },
+        "tools_equipment": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "outputs_and_records": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "acceptance_condition": {
+          "type": "string",
+          "minLength": 20
+        },
+        "hold_point": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "implementationPlan": {
+      "type": "object",
+      "required": [
+        "implementation_readiness",
+        "implementation_summary",
+        "delivery_strategy",
+        "make_buy_partner_decision",
+        "authorizations_and_prerequisites",
+        "implementation_steps",
+        "procurement_and_contracting_actions",
+        "long_lead_items",
+        "decision_points",
+        "field_lab_or_vendor_activities",
+        "fallbacks_and_contingencies",
+        "implementation_records",
+        "linked_playbooks",
+        "implementation_source_basis",
+        "open_decisions",
+        "implementation_quality_score"
+      ],
+      "properties": {
+        "implementation_readiness": {
+          "type": "string",
+          "minLength": 20
+        },
+        "implementation_summary": {
+          "type": "string",
+          "minLength": 40
+        },
+        "delivery_strategy": {
+          "type": "object",
+          "minProperties": 3,
+          "additionalProperties": true
+        },
+        "make_buy_partner_decision": {
+          "type": "object",
+          "minProperties": 3,
+          "additionalProperties": true
+        },
+        "authorizations_and_prerequisites": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "authorization",
+              "evidence"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "implementation_steps": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "required": [
+              "step_id",
+              "action",
+              "responsible_role",
+              "work_location",
+              "required_inputs",
+              "detailed_guidance",
+              "tools_equipment",
+              "outputs_and_records",
+              "acceptance_condition"
+            ],
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 3
+              },
+              "action": {
+                "type": "string",
+                "minLength": 10
+              },
+              "responsible_role": {
+                "type": "string",
+                "minLength": 2
+              },
+              "supporting_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "work_location": {
+                "type": "string",
+                "minLength": 10
+              },
+              "required_inputs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "detailed_guidance": {
+                "type": "string",
+                "minLength": 80
+              },
+              "tools_equipment": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 2
+                }
+              },
+              "outputs_and_records": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "acceptance_condition": {
+                "type": "string",
+                "minLength": 20
+              },
+              "hold_point": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "procurement_and_contracting_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 15
+          }
+        },
+        "long_lead_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "item",
+              "action"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "decision_points": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "decision",
+              "required_by",
+              "evidence"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "field_lab_or_vendor_activities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "activity",
+              "where",
+              "evidence"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "fallbacks_and_contingencies": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "trigger",
+              "response"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "implementation_records": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "string",
+            "minLength": 10
+          }
+        },
+        "linked_playbooks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "implementation_source_basis": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "open_decisions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "decision",
+              "owner",
+              "required_by",
+              "closure_evidence"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "implementation_quality_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
         }
       },
       "additionalProperties": true

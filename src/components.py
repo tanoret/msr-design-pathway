@@ -399,6 +399,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
     resources = task.get("resources") or {}
     ewp = task.get("engineering_work_package") or {}
     execution = task.get("execution") or {}
+    implementation = task.get("implementation_plan") or {}
     pills = [task.get("concept"), task.get("phase"), task.get("scenario_route"), ewp.get("primary_domain"), ewp.get("work_pattern")]
     pill_html = "".join(f'<span class="msr-pill">{html.escape(str(value).replace("_", " ").title())}</span>' for value in pills if value)
     st.markdown(
@@ -422,7 +423,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
     cols[6].metric("Task cost", format_money_kusd(cost.get("total_kusd")))
     cols[7].metric("Fully burdened view", format_money_kusd(cost.get("fully_burdened_task_view_kusd") or cost.get("total_kusd")))
 
-    tabs = st.tabs(["Scope", "Inputs", "Execution", "Outputs", "Requirements & tools", "Interfaces & controls", "Cost basis", "Resources"])
+    tabs = st.tabs(["Scope", "Implementation", "Inputs", "Engineering procedure", "Outputs", "Requirements & tools", "Interfaces & controls", "Cost basis", "Resources"])
     with tabs[0]:
         render_section_header("Technical scope", str(ewp.get("engineering_readiness_level") or ""), "Work package")
         st.write(task.get("description") or execution.get("purpose") or "—")
@@ -460,12 +461,101 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
             st.markdown("#### Technical authority")
             st.write(resource_plan.get("technical_authority") or task.get("responsible_role") or "—")
     with tabs[1]:
+        render_section_header("Implementation plan", str(implementation.get("implementation_readiness") or "Execution basis"), "Execution")
+        st.write(implementation.get("implementation_summary") or "—")
+        strategy = implementation.get("delivery_strategy") or {}
+        make_buy = implementation.get("make_buy_partner_decision") or {}
+        strategy_cols = st.columns(2)
+        with strategy_cols[0]:
+            st.markdown("#### Delivery strategy")
+            if strategy:
+                for key, value in strategy.items():
+                    st.markdown(f"**{str(key).replace('_', ' ').title()}**")
+                    st.write(value if not isinstance(value, (list, dict)) else value)
+            else:
+                st.write("—")
+        with strategy_cols[1]:
+            st.markdown("#### Make / buy / partner")
+            if make_buy:
+                for key, value in make_buy.items():
+                    st.markdown(f"**{str(key).replace('_', ' ').title()}**")
+                    st.write(value if not isinstance(value, (list, dict)) else value)
+            else:
+                st.write("—")
+
+        auth = _records_frame(implementation.get("authorizations_and_prerequisites") or [], ["authorization", "evidence"])
+        if not auth.empty:
+            st.markdown("#### Authorizations and prerequisites")
+            st.dataframe(auth, use_container_width=True, hide_index=True, height=min(430, 95 + 62 * len(auth)))
+
+        st.markdown("#### Field execution sequence")
+        for index, step in enumerate(implementation.get("implementation_steps") or [], start=1):
+            step_id = step.get("step_id") or f"IMP-{index:02d}"
+            action = step.get("action") or "Implementation action"
+            with st.expander(f"{step_id} · {action}", expanded=index == 1):
+                cols = st.columns([1.05, 1])
+                with cols[0]:
+                    st.markdown("**Responsible / work location**")
+                    st.write(f"{step.get('responsible_role') or '—'} · {step.get('work_location') or '—'}")
+                    st.markdown("**Required inputs**")
+                    _list_markdown(step.get("required_inputs") or [])
+                    st.markdown("**Detailed execution guidance**")
+                    st.write(step.get("detailed_guidance") or "—")
+                with cols[1]:
+                    st.markdown("**Tools and equipment**")
+                    _list_markdown(step.get("tools_equipment") or [])
+                    st.markdown("**Outputs and retained records**")
+                    _list_markdown(step.get("outputs_and_records") or [])
+                    st.markdown("**Acceptance condition**")
+                    st.write(step.get("acceptance_condition") or "—")
+                if step.get("hold_point"):
+                    st.markdown("**Hold point**")
+                    st.write(step.get("hold_point"))
+
+        procurement = implementation.get("procurement_and_contracting_actions") or []
+        long_leads = implementation.get("long_lead_items") or []
+        decisions = implementation.get("decision_points") or []
+        field_work = implementation.get("field_lab_or_vendor_activities") or []
+        contingencies = implementation.get("fallbacks_and_contingencies") or []
+        cols = st.columns(2)
+        with cols[0]:
+            st.markdown("#### Procurement and contracting")
+            _list_markdown(procurement)
+            if long_leads:
+                st.markdown("#### Long-lead items")
+                st.dataframe(_records_frame(long_leads, ["item", "action"]), use_container_width=True, hide_index=True, height=min(430, 95 + 58 * len(long_leads)))
+            if field_work:
+                st.markdown("#### Laboratory, field, and vendor work")
+                st.dataframe(_records_frame(field_work, ["activity", "where", "evidence"]), use_container_width=True, hide_index=True, height=min(520, 95 + 70 * len(field_work)))
+        with cols[1]:
+            if decisions:
+                st.markdown("#### Decisions and release gates")
+                st.dataframe(_records_frame(decisions, ["decision", "required_by", "evidence"]), use_container_width=True, hide_index=True, height=min(520, 95 + 70 * len(decisions)))
+            if contingencies:
+                st.markdown("#### Fallbacks and contingencies")
+                st.dataframe(_records_frame(contingencies, ["trigger", "response"]), use_container_width=True, hide_index=True, height=min(520, 95 + 74 * len(contingencies)))
+
+        st.markdown("#### Implementation records")
+        _list_markdown(implementation.get("implementation_records") or [])
+        source_basis = implementation.get("implementation_source_basis") or []
+        if source_basis:
+            st.markdown("#### Technical and execution precedents")
+            st.dataframe(_records_frame(source_basis), use_container_width=True, hide_index=True, height=min(520, 95 + 55 * len(source_basis)))
+        open_decisions = implementation.get("open_decisions") or []
+        if open_decisions:
+            st.markdown("#### Open implementation decisions")
+            if isinstance(open_decisions[0], dict):
+                st.dataframe(_records_frame(open_decisions, ["decision", "owner", "required_by", "closure_evidence"]), use_container_width=True, hide_index=True, height=min(520, 95 + 68 * len(open_decisions)))
+            else:
+                _list_markdown(open_decisions)
+
+    with tabs[2]:
         frame = _records_frame(ewp.get("controlled_inputs") or [], ["input_id", "input", "source_or_owner", "required_maturity", "verification_before_use", "configuration_control"])
         if frame.empty:
             _list_markdown(execution.get("required_inputs") or [])
         else:
             st.dataframe(frame, use_container_width=True, hide_index=True, height=min(720, 86 + 44 * len(frame)))
-    with tabs[2]:
+    with tabs[3]:
         steps = ewp.get("execution_procedure") or []
         for index, item in enumerate(steps, start=1):
             step_no = int(item.get("step") or index)
@@ -498,7 +588,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
         if holds:
             st.markdown("#### Required reviews and hold points")
             st.dataframe(_records_frame(holds), use_container_width=True, hide_index=True, height=min(420, 90 + 58 * len(holds)))
-    with tabs[3]:
+    with tabs[4]:
         frame = _records_frame(ewp.get("deliverable_register") or [], ["deliverable_id", "deliverable", "minimum_contents", "format_and_records", "preparer", "independent_review", "approval", "downstream_use"])
         if not frame.empty:
             st.dataframe(frame, use_container_width=True, hide_index=True, height=min(720, 95 + 50 * len(frame)))
@@ -510,7 +600,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
         if minimum_record:
             st.markdown("#### Minimum execution record")
             _list_markdown(minimum_record)
-    with tabs[4]:
+    with tabs[5]:
         req = _records_frame(ewp.get("requirements_and_guidance") or [], ["authority_type", "citation", "topic", "applicability", "planned_compliance_evidence"])
         if not req.empty:
             st.markdown("#### Requirements and guidance")
@@ -519,7 +609,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
         if not tools.empty:
             st.markdown("#### Toolchain and method controls")
             st.dataframe(tools, use_container_width=True, hide_index=True, height=min(650, 90 + 46 * len(tools)))
-    with tabs[5]:
+    with tabs[6]:
         interface_df = _records_frame(ewp.get("interfaces") or [], ["direction", "interface", "required_exchange", "interface_owner"])
         if not interface_df.empty:
             st.markdown("#### Interfaces")
@@ -542,7 +632,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
         if controls:
             compact_controls = [{"Control": str(key).replace("_", " ").title(), "Value": value if not isinstance(value, (dict, list)) else json.dumps(value, ensure_ascii=False)} for key, value in controls.items()]
             st.dataframe(pd.DataFrame(compact_controls), use_container_width=True, hide_index=True, height=min(460, 90 + 38 * len(compact_controls)))
-    with tabs[6]:
+    with tabs[7]:
         st.markdown("#### Basis of estimate")
         estimate_cols = st.columns(4)
         estimate_cols[0].metric("Direct task estimate", format_money_kusd(cost.get("total_kusd")))
@@ -629,7 +719,7 @@ def render_task_detail(task: dict[str, Any], compact: bool = False) -> None:
         st.markdown("#### Uncertainty basis")
         st.write(cost.get("uncertainty_range_basis") or "—")
 
-    with tabs[7]:
+    with tabs[8]:
         assignments = resources.get("assignments") or []
         if assignments:
             fields = ["role", "work_type", "avg_fte", "fte_years", "loaded_rate_kusd_per_fte_year", "labor_cost_kusd"]

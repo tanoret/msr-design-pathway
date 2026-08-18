@@ -1,8 +1,8 @@
 {
   "format": "project-msr-sharded-json",
   "format_version": 1,
-  "application_version": "4.2.2",
-  "database_version": "4.2.0",
+  "application_version": "4.3.0",
+  "database_version": "4.3.0",
   "database_name": "Project-MSR Integrated Engineering, Demonstration, Licensing, Resource and Financial Database",
   "storage": "plain UTF-8 JSON shards; no gzip, binary encoding, or data reduction",
   "top_level_order": [
@@ -26,9 +26,13 @@
     "regulatory_reference_catalog",
     "data_quality",
     "route_cost_model",
-    "planning_profile"
+    "planning_profile",
+    "implementation_playbooks",
+    "fuel_supply_plan",
+    "chemistry_processing_plan",
+    "implementation_closure_register"
   ],
-  "canonical_semantic_sha256": "554ff077c2b6bb7ad3948a1ab0f65fca018190e9ea6b5f0d95379170e0bf4f51",
+  "canonical_semantic_sha256": "fd8c4204b183075996c3a5d59696f435dea1b2035331d99d3b316ff6459b687d",
   "record_counts": {
     "shared_tasks": 841,
     "route_tasks": 96,
@@ -39,48 +43,58 @@
     {
       "path": "project_msr_database.core.json",
       "kind": "core",
-      "size_bytes": 23120518,
-      "sha256": "5e9adef8b2e1b824eec604338afde030ee642d5922ee116f0d3aa26dcda4b1e3"
+      "size_bytes": 25763342,
+      "sha256": "d08251527f7cd67f37f4d6e078dc6f6f90f1a9b5efa9f45199f8fa2fdde52246"
     },
     {
       "path": "project_msr_database.tasks.001.json",
       "kind": "task_shard",
       "shard_index": 1,
       "task_start_index": 0,
-      "task_end_index": 272,
-      "task_count": 273,
-      "size_bytes": 46385345,
-      "sha256": "5776f3a31f3a8970fbcd2bfdd62b00edadc6fdf979cba17190f3fb1f51a2cc13"
+      "task_end_index": 237,
+      "task_count": 238,
+      "size_bytes": 44629393,
+      "sha256": "a3e5a8a1bde508f0be55eae621c1fc4e4561e3073d6bf524592f89e4d7bc318b"
     },
     {
       "path": "project_msr_database.tasks.002.json",
       "kind": "task_shard",
       "shard_index": 2,
-      "task_start_index": 273,
-      "task_end_index": 480,
-      "task_count": 208,
-      "size_bytes": 46514281,
-      "sha256": "479f960bde72421b8eef7ebd1ba20ee53019f0f5cd84072306d4dae1447ce2ce"
+      "task_start_index": 238,
+      "task_end_index": 424,
+      "task_count": 187,
+      "size_bytes": 44523962,
+      "sha256": "9f6e5bd6cd7aa0787413ad4da26e23a43d4a4e62e51789eeb93c53dccdd70848"
     },
     {
       "path": "project_msr_database.tasks.003.json",
       "kind": "task_shard",
       "shard_index": 3,
-      "task_start_index": 481,
-      "task_end_index": 704,
-      "task_count": 224,
-      "size_bytes": 46475705,
-      "sha256": "25fadf09ae860998d65b68ff2570dcbac5d2ffa3b341dd504e0695a09ca79157"
+      "task_start_index": 425,
+      "task_end_index": 620,
+      "task_count": 196,
+      "size_bytes": 44621964,
+      "sha256": "5280af0927dae71d10eed5b3365887e9a017d6465e726232379ec998e19d96f2"
     },
     {
       "path": "project_msr_database.tasks.004.json",
       "kind": "task_shard",
       "shard_index": 4,
-      "task_start_index": 705,
+      "task_start_index": 621,
+      "task_end_index": 798,
+      "task_count": 178,
+      "size_bytes": 44522706,
+      "sha256": "7c1a4b584ff882f1181aafb2a90fca410d186819398be1f24b0af08102493869"
+    },
+    {
+      "path": "project_msr_database.tasks.005.json",
+      "kind": "task_shard",
+      "shard_index": 5,
+      "task_start_index": 799,
       "task_end_index": 840,
-      "task_count": 136,
-      "size_bytes": 30892363,
-      "sha256": "c36bc41d8b8cf3867d07d0b04819c6634bc6ff2db1b694c448cf5825c4a66249"
+      "task_count": 42,
+      "size_bytes": 9534130,
+      "sha256": "5e303beafd67108894b5ffe25034f06966e3206df60871d55aeb6be151654a6e"
     }
   ]
 }

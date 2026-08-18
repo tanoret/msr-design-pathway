@@ -104,7 +104,7 @@ def test_every_task_has_engineering_ready_work_package(database: dict) -> None:
         "risks_and_controls", "quality_records", "definition_of_done", "resource_plan", "execution_controls",
     }
     tasks = database["tasks"] + all_module_tasks(database)
-    assert database["meta"]["version"] == "4.2.0"
+    assert database["meta"]["version"] == "4.3.0"
     assert database["data_quality"]["engineering_ready_task_count"] == len(tasks)
     for task in tasks:
         package = task.get("engineering_work_package") or {}
@@ -118,7 +118,7 @@ def test_every_task_has_engineering_ready_work_package(database: dict) -> None:
         assert package["risks_and_controls"], task["id"]
         assert len(package["definition_of_done"]) >= 5, task["id"]
         assert task["execution"]["engineering_ready"] is True
-        assert task["execution"]["detail_level"] == "engineering_ready_v4"
+        assert task["execution"]["detail_level"] == "engineering_ready_v4_3"
 
 
 def test_internal_display_has_no_warning_payloads_or_cno_led_commentary(database: dict) -> None:
@@ -199,3 +199,121 @@ def test_task_cost_audit_metadata_is_complete(database: dict) -> None:
     assert database["meta"]["cost_estimate_version"] == "4.2.0"
     assert database["data_quality"]["costed_task_count"] == len(database["tasks"]) + len(all_module_tasks(database))
     assert database["financials"]["task_cost_reestimate_v4_2"]["costed_activity_count"] == len(database["tasks"])
+
+
+def test_every_task_has_execution_ready_implementation_plan(database: dict) -> None:
+    tasks = database["tasks"] + all_module_tasks(database)
+    required = {
+        "implementation_readiness", "implementation_summary", "delivery_strategy",
+        "make_buy_partner_decision", "authorizations_and_prerequisites",
+        "implementation_steps", "procurement_and_contracting_actions", "long_lead_items",
+        "decision_points", "field_lab_or_vendor_activities", "fallbacks_and_contingencies",
+        "implementation_records", "linked_playbooks", "implementation_source_basis",
+        "open_decisions", "implementation_quality_score",
+    }
+    assert database["meta"]["implementation_plan_schema"] == "1.0"
+    assert database["data_quality"]["implementation_ready_task_count"] == len(tasks)
+    for task in tasks:
+        plan = task.get("implementation_plan") or {}
+        assert required.issubset(plan), task["id"]
+        assert len(plan["implementation_summary"]) >= 40, task["id"]
+        assert len(plan["implementation_steps"]) >= 5, task["id"]
+        assert plan["procurement_and_contracting_actions"], task["id"]
+        assert plan["decision_points"], task["id"]
+        assert plan["field_lab_or_vendor_activities"], task["id"]
+        assert plan["fallbacks_and_contingencies"], task["id"]
+        assert len(plan["implementation_records"]) >= 4, task["id"]
+        for step in plan["implementation_steps"]:
+            assert len(step["detailed_guidance"]) >= 80, (task["id"], step.get("step_id"))
+            assert step["required_inputs"], (task["id"], step.get("step_id"))
+            assert step["tools_equipment"], (task["id"], step.get("step_id"))
+            assert step["outputs_and_records"], (task["id"], step.get("step_id"))
+
+
+def test_chemistry_processing_plan_is_experiment_specific(database: dict) -> None:
+    plan = database["chemistry_processing_plan"]
+    tests = plan["experiment_matrix"]
+    assert len(tests) == 25
+    assert database["data_quality"]["chemistry_processing_test_count"] == 25
+    required = {
+        "test_id", "campaign", "objective", "configuration", "material_stage",
+        "primary_measurements", "analytical_methods", "acceptance_basis",
+        "model_or_decision_supported", "linked_task_ids", "planned_window",
+        "facility_strategy", "required_records", "minimum_test_sequence",
+        "controlled_variables", "equipment_and_consumables",
+        "replicate_and_uncertainty_strategy", "sample_and_archive_plan",
+        "stop_conditions", "data_products", "decision_rule",
+    }
+    for test in tests:
+        assert required.issubset(test), test["test_id"]
+        assert len(test["minimum_test_sequence"]) >= 6, test["test_id"]
+        assert len(test["controlled_variables"]) >= 6, test["test_id"]
+        assert len(test["equipment_and_consumables"]) >= 6, test["test_id"]
+        assert test["acceptance_basis"], test["test_id"]
+        assert test["decision_rule"], test["test_id"]
+    campaigns = " | ".join((test["campaign"] + " " + test["objective"]).lower().replace("-", " ") for test in tests)
+    for phrase in ["purification", "plate", "noble gas", "aerosol", "rare earth", "irradiated", "demonstrator", "waste"]:
+        assert phrase in campaigns
+
+
+def test_fuel_supply_plan_covers_source_to_disposition(database: dict) -> None:
+    plan = database["fuel_supply_plan"]
+    assert len(plan["execution_phases"]) >= 6
+    text = str(plan).lower()
+    for phrase in [
+        "doe haleu allocation", "commercial", "enrichment", "deconversion",
+        "fuel-salt synthesis", "analytical", "packaging", "transport", "receipt",
+        "material-accountability", "disposition",
+    ]:
+        assert phrase in text
+    assert "30 million" in text
+    assert {"S-INL-05", "D-DEMO-04", "P-PKG-02"}.issubset(set(plan["linked_task_ids"]))
+
+
+def test_high_consequence_fuel_and_chemistry_tasks_have_task_specific_execution(database: dict) -> None:
+    all_tasks = list(database["tasks"])
+    for module in database["pathway_modules"].values():
+        all_tasks.extend(module.get("demonstrator", []))
+        all_tasks.extend(module.get("power_reactor", []))
+    by_id = {task["id"]: task for task in all_tasks}
+
+    minimum_steps = {
+        "S-INL-05": 8,
+        "D-RD-01": 8,
+        "D-DEMO-04": 9,
+        "S-MTH-04": 6,
+        "S-MSR-02": 5,
+        "S-MSR-04": 6,
+        "S-MSR-05": 5,
+        "S-MSR-06": 6,
+        "S-MSR-09": 7,
+        "S-MTH-05": 7,
+        "D-RD-02": 7,
+        "S-INL-19": 5,
+        "P-PKG-02": 7,
+        "D-3.14.f": 5,
+        "P-3.14.f": 5,
+        "D-EXP-09": 5,
+        "D-EXP-10": 5,
+        "D-EXP-12": 5,
+        "P-OPT-06": 5,
+    }
+    for task_id, count in minimum_steps.items():
+        steps = by_id[task_id]["implementation_plan"]["implementation_steps"]
+        assert len(steps) >= count, task_id
+        assert all(step.get("hold_point") for step in steps), task_id
+        assert not all(str(step["step_id"]).startswith("IMP-") for step in steps), task_id
+
+    assert len(by_id["D-RD-01"]["implementation_plan"]["task_specific_test_ids"]) == 25
+    assert len(by_id["S-MTH-04"]["implementation_plan"]["task_specific_test_ids"]) == 25
+    assert database["data_quality"]["implementation_playbook_count"] >= 11
+    assert database["data_quality"]["implementation_closure_item_count"] == 8
+    assert len(database["implementation_closure_register"]) == 8
+
+    task_ids = set(by_id)
+    for playbook in database["implementation_playbooks"].values():
+        assert set(playbook.get("linked_task_ids", [])).issubset(task_ids)
+    assert set(database["fuel_supply_plan"]["linked_task_ids"]).issubset(task_ids)
+    assert set(database["chemistry_processing_plan"]["linked_task_ids"]).issubset(task_ids)
+    for experiment in database["chemistry_processing_plan"]["experiment_matrix"]:
+        assert set(experiment.get("linked_task_ids", [])).issubset(task_ids), experiment["test_id"]

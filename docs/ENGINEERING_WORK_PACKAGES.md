@@ -1,46 +1,32 @@
-# Engineering Work Package 4.2
+# Project-MSR Engineering and Implementation Work Package Standard - v4.3.0
 
-Every Project-MSR activity is represented as an execution-ready engineering work package. The record is intended to be assignable to a producing engineer or team without a separate interpretation exercise.
+Every WBS activity has two complementary records.
 
-## Scope and decision use
+## Engineering Work Package
 
-Each package identifies the technical scope, objective, boundaries, exclusions, downstream decision, and engineering questions that must be closed. Demonstrator-ready and final commercial releases are distinguished where staged execution is used.
+Defines the technical scope, questions, entry criteria, controlled inputs, engineering procedure, requirements, tools, deliverables, verification and validation, interfaces, risks, quality records, resources, schedule logic, acceptance metrics, hold points, handoff and definition of done.
 
-## Entry criteria and controlled inputs
+## Implementation Plan
 
-Entry criteria establish prerequisite maturity, requirements, qualified tools, interface data, configuration state, and authorization conditions. Each controlled input identifies its owner, source, revision, units, uncertainty, applicability, pre-use check, configuration treatment, and change-notification obligation.
+Defines how the work is actually executed:
 
-## Ordered execution procedure
+- implementation readiness and practical summary;
+- delivery strategy and owner/partner/supplier split;
+- authorizations, licenses, facility readiness and prerequisites;
+- step-by-step work at the engineering office, laboratory, supplier, test facility, construction site or operating plant;
+- inputs, equipment/tools, outputs, records, acceptance and hold points for each step;
+- RFI/RFP/PO/task-order and supplier-data requirements;
+- long-lead materials, facility slots, equipment and specialist capacity;
+- decisions, owners, dates and closure evidence;
+- laboratory/field/vendor campaigns and data custody;
+- fallback routes and stop-work triggers;
+- implementation source basis, records and open decisions.
 
-Each procedure step separates the action, engineering guidance, required step inputs, expected objective evidence, verification method, acceptance basis, and review checkpoint. The package states what to calculate, model, draw, specify, procure, fabricate, inspect, test, analyze, or submit.
+## Execution principles
 
-## Requirements, tools, and deliverables
-
-Requirement records include applicability, required engineering response, and expected compliance evidence. Tool records identify the intended use, code-of-record status, version, qualification or calibration expectations, limitations, and retained native files. Deliverables state minimum technical content, preparer, reviewer, approver, downstream user, handoff package, and revision triggers.
-
-## Verification and definition of done
-
-The package defines independent checks, benchmarks, validation evidence, uncertainty treatment, interface checks, readiness conditions, hold points, discrepancy resolution, measurable acceptance metrics, and the minimum execution record. Completion requires released evidence, closed review comments, accepted interfaces, controlled native files, and documented limitations or conditions of use.
-
-## Resource and cost basis
-
-The producing team is separated from support, independent review, QA/configuration, licensing integration, controls, and approval-only roles. Each task includes:
-
-- planned FTE-years and productive labor hours;
-- labor-hour allocation to production, independent review, integration, QA/configuration, and controls;
-- fully burdened discipline rates;
-- direct external engineering and laboratory services;
-- software, compute, data, equipment, materials, fabrication, facility, test, field, regulatory, legal, advisory, and travel costs;
-- task risk allowance and low/high range;
-- prior and revised estimates, estimate class, method, basis-of-estimate identifier, drivers, exclusions, and re-estimate triggers;
-- a non-additive allocated share of major program contracts where this improves visibility into the fully burdened technical task.
-
-Accounting totals use each source package once. Allocated package shares are display-only and must not be summed a second time.
-
-## Schedule logic
-
-The schedule identifies predecessors, relationship intent, loading shape, staged releases, latest required finish, conditions for parallel work, stop conditions, and evidence-based progress measures.
-
-## Application presentation
-
-The task inspector presents the record in Scope, Inputs, Execution, Outputs, Requirements and tools, Interfaces and controls, Resources, and Cost basis sections. Long execution and test content is displayed in expanders and tables rather than fixed-height text boxes.
+1. Retain owner control of requirements, technical conclusions, acceptance, configuration and regulatory commitments.
+2. Buy bounded specialist capability, facility time, supplier engineering, fabrication and testing with native-data and records rights.
+3. Use staged evidence and do not commit radioactive work before surrogate down-selection demonstrates the need.
+4. Do not release irreversible procurement, fabrication, construction or fuel operations without the defined hold-point evidence.
+5. Credit a result only after configuration, uncertainty, sample/material balance, independent review and discrepancy closure are complete.
+6. Link every task to downstream design, licensing, procurement, test or operating decisions so work does not become unowned research.

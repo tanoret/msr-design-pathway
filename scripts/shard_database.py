@@ -19,7 +19,7 @@ def main() -> int:
     )
     parser.add_argument("input", type=Path)
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "data")
-    parser.add_argument("--application-version", default="4.2.2")
+    parser.add_argument("--application-version", default="4.3.0")
     parser.add_argument("--max-task-shard-bytes", type=int, default=45_000_000)
     args = parser.parse_args()
 

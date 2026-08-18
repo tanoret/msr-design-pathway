@@ -22,6 +22,7 @@ def _manifest() -> dict:
 def test_manifest_uses_plain_uncompressed_json_shards() -> None:
     manifest = _manifest()
     assert manifest["format"] == SHARDED_DATABASE_FORMAT
+    assert manifest["application_version"] == "4.3.0"
     assert manifest["storage"].startswith("plain UTF-8 JSON shards")
     assert "no gzip" in manifest["storage"]
     assert all(str(part["path"]).endswith(".json") for part in manifest["parts"])
@@ -62,6 +63,7 @@ def test_sharded_database_is_complete_and_matches_manifest_digest(database: dict
 def test_default_loader_returns_complete_database_without_monolithic_file(database: dict) -> None:
     assert not (DATA_DIR / "project_msr_database.json").exists()
     loaded = load_database(DEFAULT_DATABASE)
-    assert loaded == database
-    assert loaded["meta"]["version"] == "4.2.0"
+    assert loaded["meta"]["version"] == database["meta"]["version"] == "4.3.0"
+    assert len(loaded["tasks"]) == len(database["tasks"])
+    assert loaded["data_quality"] == database["data_quality"]
     assert loaded["project"]["name"] == "Project-MSR"
